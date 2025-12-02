@@ -1,0 +1,99 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Form View cho CRM Lead -->
+    <record id="view_crm_lead_form_custom" model="ir.ui.view">
+        <field name="name">crm.lead.form.custom</field>
+        <field name="model">crm.lead</field>
+        <field name="inherit_id" ref="crm.crm_lead_view_form"/>
+        <field name="arch" type="xml">
+            <!-- Thêm tab mới cho thông tin tùy chỉnh -->
+            <xpath expr="//notebook" position="inside">
+                <page string="Thông tin Tùy chỉnh" name="custom_info">
+                    <group>
+                        <group string="Đánh giá Lead">
+                            <field name="lead_score"/>
+                            <field name="lead_quality" readonly="1"/>
+                            <field name="probability_custom"/>
+                            <field name="days_in_stage" readonly="1"/>
+                        </group>
+                        <group string="Thông tin Bổ sung">
+                            <field name="industry_type"/>
+                            <field name="lead_source_detail"/>
+                            <field name="expected_close_date"/>
+                            <field name="decision_maker"/>
+                            <field name="budget_confirmed"/>
+                        </group>
+                    </group>
+                    <group string="Thông tin Đối thủ">
+                        <field name="competitor_info" placeholder="Nhập thông tin về đối thủ cạnh tranh..."/>
+                    </group>
+                    <div class="oe_button_box" name="button_box">
+                        <button name="action_calculate_lead_score" 
+                                type="object" 
+                                string="Tính Điểm Lead" 
+                                class="oe_stat_button"
+                                icon="fa-calculator"/>
+                    </div>
+                </page>
+            </xpath>
+        </field>
+    </record>
+
+    <!-- List View cho CRM Lead -->
+    <record id="view_crm_lead_tree_custom" model="ir.ui.view">
+        <field name="name">crm.lead.tree.custom</field>
+        <field name="model">crm.lead</field>
+        <field name="inherit_id" ref="crm.crm_lead_view_tree"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='name']" position="after">
+                <field name="lead_score" optional="show"/>
+                <field name="lead_quality" optional="show"/>
+                <field name="industry_type" optional="hide"/>
+                <field name="expected_close_date" optional="hide"/>
+            </xpath>
+        </field>
+    </record>
+
+    <!-- Kanban View cho CRM Lead -->
+    <record id="view_crm_lead_kanban_custom" model="ir.ui.view">
+        <field name="name">crm.lead.kanban.custom</field>
+        <field name="model">crm.lead</field>
+        <field name="inherit_id" ref="crm.crm_lead_view_kanban"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='name']" position="after">
+                <div>
+                    <field name="lead_score"/>
+                    <span class="badge badge-pill" 
+                          attrs="{'invisible': [('lead_quality', '=', False)]}"
+                          t-attf-class="badge-#{record.lead_quality.raw_value == 'hot' ? 'danger' : (record.lead_quality.raw_value == 'warm' ? 'warning' : 'secondary')}">
+                        <field name="lead_quality" readonly="1"/>
+                    </span>
+                </div>
+                <div>
+                    <i class="fa fa-industry"/> <field name="industry_type" readonly="1"/>
+                </div>
+            </xpath>
+        </field>
+    </record>
+
+    <!-- Search View cho CRM Lead -->
+    <record id="view_crm_lead_search_custom" model="ir.ui.view">
+        <field name="name">crm.lead.search.custom</field>
+        <field name="model">crm.lead</field>
+        <field name="inherit_id" ref="crm.crm_lead_view_search"/>
+        <field name="arch" type="xml">
+            <xpath expr="//filter[@name='my_activities']" position="after">
+                <filter string="Lead Nóng" name="hot_leads" domain="[('lead_quality', '=', 'hot')]"/>
+                <filter string="Lead Ấm" name="warm_leads" domain="[('lead_quality', '=', 'warm')]"/>
+                <filter string="Lead Lạnh" name="cold_leads" domain="[('lead_quality', '=', 'cold')]"/>
+                <separator/>
+                <filter string="Ngân sách Đã Xác nhận" name="budget_confirmed" domain="[('budget_confirmed', '=', True)]"/>
+            </xpath>
+            <xpath expr="//group" position="inside">
+                <filter string="Theo Chất lượng Lead" name="group_lead_quality" context="{'group_by': 'lead_quality'}"/>
+                <filter string="Theo Ngành" name="group_industry" context="{'group_by': 'industry_type'}"/>
+            </xpath>
+        </field>
+    </record>
+</odoo>
+

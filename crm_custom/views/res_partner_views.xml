@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Form View cho Res Partner -->
+    <record id="view_partner_form_custom" model="ir.ui.view">
+        <field name="name">res.partner.form.custom</field>
+        <field name="model">res.partner</field>
+        <field name="inherit_id" ref="base.view_partner_form"/>
+        <field name="arch" type="xml">
+            <!-- Thêm tab mới cho thông tin CRM -->
+            <xpath expr="//notebook" position="inside">
+                <page string="Thông tin CRM" name="crm_info">
+                    <group>
+                        <group string="Phân khúc">
+                            <field name="customer_segment"/>
+                            <field name="preferred_contact_method"/>
+                        </group>
+                        <group string="Thống kê">
+                            <field name="customer_lifetime_value" readonly="1"/>
+                            <field name="first_contact_date"/>
+                            <field name="last_purchase_date" readonly="1"/>
+                        </group>
+                    </group>
+                    <group string="Thống kê Cơ hội">
+                        <group>
+                            <field name="total_opportunities" readonly="1"/>
+                            <field name="won_opportunities" readonly="1"/>
+                            <field name="lost_opportunities" readonly="1"/>
+                            <field name="win_rate" readonly="1"/>
+                        </group>
+                    </group>
+                    <group string="Ghi chú">
+                        <field name="notes" placeholder="Nhập ghi chú về khách hàng..."/>
+                    </group>
+                </page>
+            </xpath>
+        </field>
+    </record>
+
+    <!-- List View cho Res Partner -->
+    <record id="view_partner_tree_custom" model="ir.ui.view">
+        <field name="name">res.partner.tree.custom</field>
+        <field name="model">res.partner</field>
+        <field name="inherit_id" ref="base.view_partner_tree"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='name']" position="after">
+                <field name="customer_segment" optional="show"/>
+                <field name="customer_lifetime_value" optional="hide"/>
+                <field name="win_rate" optional="hide"/>
+            </xpath>
+        </field>
+    </record>
+</odoo>
+

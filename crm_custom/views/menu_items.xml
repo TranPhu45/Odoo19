@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Menu chính cho CRM Custom -->
+    <menuitem id="menu_crm_custom_root"
+              name="CRM Tùy chỉnh"
+              parent="crm.crm_menu_root"
+              sequence="100"/>
+
+    <!-- Menu Lead với các view tùy chỉnh -->
+    <menuitem id="menu_crm_lead_custom"
+              name="Lead Tùy chỉnh"
+              parent="menu_crm_custom_root"
+              action="crm.crm_lead_action_pipeline"
+              sequence="10"/>
+
+    <!-- Menu Báo cáo -->
+    <menuitem id="menu_crm_reports"
+              name="Báo cáo"
+              parent="menu_crm_custom_root"
+              sequence="90"/>
+</odoo>
+

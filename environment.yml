@@ -1,0 +1,48 @@
+# Conda Environment file cho Odoo 19
+# Tạo môi trường bằng: conda env create -f environment.yml
+# Hoặc: conda env update -f environment.yml
+
+name: Odoo19
+channels:
+  - conda-forge
+  - defaults
+dependencies:
+  - python=3.10
+  - pip
+  - pip:
+    # Database
+    - psycopg2-binary>=2.9.0
+    # XML Processing
+    - lxml>=4.6.0
+    # Image Processing
+    - Pillow>=9.0.0
+    # Date/Time Utilities
+    - python-dateutil>=2.8.0
+    - pytz>=2021.3
+    # Internationalization
+    - Babel>=2.9.0
+    # Web Framework
+    - Werkzeug>=2.0.0
+    # PDF Generation
+    - reportlab>=3.6.0
+    # Utilities
+    - decorator>=4.4.0
+    - requests>=2.25.0
+    # Excel Export
+    - XlsxWriter>=3.0.0
+    # SOAP Client
+    - zeep>=4.1.0
+    # Number to Words
+    - num2words>=0.5.10
+    # Standard Numbers
+    - python-stdnum>=1.17
+    # Serial Communication
+    - pyserial>=3.5
+    # QR Code
+    - qrcode>=7.3.0
+    # vCard/vCalendar
+    - vobject>=0.9.6.1
+    # Async Support
+    - gevent>=21.8.0
+    - greenlet>=1.1.0
+

@@ -1,0 +1,69 @@
+[options]
+; ============================================
+; ODOO CONFIGURATION FILE - EXAMPLE
+; ============================================
+; Copy file này thành odoo.conf và điền thông tin của bạn
+; File odoo.conf sẽ không được commit lên Git (đã có trong .gitignore)
+
+; ============================================
+; ADDONS PATH
+; ============================================
+; Đường dẫn đến các module Odoo
+; Điều chỉnh theo vị trí thực tế của bạn
+addons_path = odoo19\addons,crm_custom
+
+; ============================================
+; DATABASE SETTINGS
+; ============================================
+db_host = localhost
+db_port = 5432
+db_user = odoo
+db_password = YOUR_PASSWORD_HERE
+; db_name = odoo_db  ; Để trống để tạo database mới qua web interface
+
+; ============================================
+; SERVER SETTINGS
+; ============================================
+http_port = 8069
+http_interface = 127.0.0.1
+; http_interface = 0.0.0.0  ; Cho phép truy cập từ mạng nội bộ
+
+; ============================================
+; LOGGING
+; ============================================
+logfile = odoo.log
+log_level = info
+; log_level = debug  ; Cho development mode
+; log_level = warn   ; Cho production mode
+
+; ============================================
+; PERFORMANCE
+; ============================================
+workers = 0  ; 0 = không dùng workers (development mode)
+; workers = 4  ; Số workers cho production (khuyến nghị: số CPU cores)
+max_cron_threads = 2
+
+; ============================================
+; SECURITY
+; ============================================
+; Master password để tạo database mới qua web interface
+admin_passwd = admin
+; ⚠️ THAY ĐỔI MẬT KHẨU NÀY TRONG PRODUCTION!
+
+; ============================================
+; DEVELOPMENT MODE
+; ============================================
+; Bỏ comment dòng dưới để bật development mode
+; dev_mode = reload, qweb, werkzeug, xml
+
+; ============================================
+; OTHER SETTINGS
+; ============================================
+; Email settings (nếu cần)
+; email_from = odoo@example.com
+; smtp_server = smtp.gmail.com
+; smtp_port = 587
+; smtp_ssl = True
+; smtp_user = your_email@gmail.com
+; smtp_password = your_password
+
