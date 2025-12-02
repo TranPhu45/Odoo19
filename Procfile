@@ -1,1 +1,1 @@
-web: python download_odoo.py && python install_odoo_deps.py && python odoo19/odoo-bin -c odoo.conf
+web: python download_odoo.py && python install_odoo_deps.py && python generate_odoo_conf.py && python odoo19/odoo-bin -c odoo.conf
