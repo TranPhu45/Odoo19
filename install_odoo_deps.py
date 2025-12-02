@@ -23,8 +23,8 @@ def create_filtered_requirements():
     with open(ODOO_REQUIREMENTS, 'r') as f:
         requirements = f.readlines()
     
-    # Filter out problematic packages
-    problematic = ['libsass']
+    # Filter out problematic packages (need system libraries)
+    problematic = ['libsass', 'lxml']
     filtered_lines = []
     skipped = []
     
@@ -94,6 +94,48 @@ def install_dependencies():
             print("✅ Installed packages from requirements file")
     except Exception as e:
         print(f"⚠️  Error installing from requirements: {str(e)}")
+    
+    # Install lxml (try binary wheel first, then fallback)
+    print("\nInstalling lxml (binary wheel)...")
+    lxml_installed = False
+    
+    # Try multiple strategies to install lxml
+    strategies = [
+        # Strategy 1: Try pre-built binary wheel (no compilation)
+        (['--only-binary=:all:', 'lxml'], "binary wheel (pre-built)"),
+        # Strategy 2: Try specific version with binary
+        (['--only-binary=:all:', 'lxml==5.1.0'], "binary wheel (version 5.1.0)"),
+        # Strategy 3: Try latest version (might have binary for this platform)
+        (['lxml'], "latest version"),
+        # Strategy 4: Try older version that might have binary
+        (['lxml==4.9.3'], "version 4.9.3 (older, more compatible)"),
+    ]
+    
+    for install_args, strategy_name in strategies:
+        try:
+            print(f"   Trying {strategy_name}...")
+            result = subprocess.run(
+                [sys.executable, '-m', 'pip', 'install'] + install_args,
+                check=True,
+                capture_output=True,
+                timeout=300
+            )
+            print(f"✅ Installed lxml ({strategy_name})")
+            lxml_installed = True
+            break
+        except subprocess.CalledProcessError as e:
+            print(f"   ⚠️  Failed: {strategy_name}")
+            continue
+        except Exception as e:
+            print(f"   ⚠️  Error: {str(e)}")
+            continue
+    
+    if not lxml_installed:
+        print("⚠️  WARNING: Could not install lxml")
+        print("   Odoo will run but some features may be limited:")
+        print("   - HTML cleaning/parsing may not work")
+        print("   - Some report generation features may be unavailable")
+        print("   - This is usually OK for basic CRM functionality")
     
     # Install lxml_html_clean (required for Odoo, separate from lxml)
     print("\nInstalling lxml_html_clean...")

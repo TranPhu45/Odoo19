@@ -54,19 +54,46 @@ def generate_odoo_conf():
     """Generate odoo.conf from environment variables"""
     print("📝 Generating odoo.conf from environment variables...")
     
-    # Get environment variables (Railway automatically injects these)
-    db_host = os.getenv('PGHOST', 'localhost')
-    db_port = os.getenv('PGPORT', '5432')
-    db_user = os.getenv('PGUSER', 'odoo')
-    db_password = os.getenv('PGPASSWORD', '')
-    db_name = os.getenv('PGDATABASE', 'odoo_db')
+    # Get environment variables (Railway automatically injects these when PostgreSQL is linked)
+    db_host = os.getenv('PGHOST')
+    db_port = os.getenv('PGPORT')
+    db_user = os.getenv('PGUSER')
+    db_password = os.getenv('PGPASSWORD')
+    db_name = os.getenv('PGDATABASE')
     http_port = os.getenv('PORT', '8069')
     admin_passwd = os.getenv('ADMIN_PASSWORD', 'admin')
     
-    # Validate required variables
+    # Validate PostgreSQL variables (required for Railway)
+    missing_vars = []
+    if not db_host:
+        missing_vars.append('PGHOST')
+    if not db_port:
+        missing_vars.append('PGPORT')
+    if not db_user:
+        missing_vars.append('PGUSER')
     if not db_password:
-        print("⚠️  WARNING: PGPASSWORD not set, using empty string")
+        missing_vars.append('PGPASSWORD')
+    if not db_name:
+        missing_vars.append('PGDATABASE')
     
+    if missing_vars:
+        print("❌ ERROR: PostgreSQL environment variables not found!")
+        print(f"   Missing: {', '.join(missing_vars)}")
+        print("\n📋 SOLUTION:")
+        print("   1. Go to Railway Dashboard")
+        print("   2. Select your project")
+        print("   3. Add PostgreSQL service (if not exists)")
+        print("   4. Link PostgreSQL service to your web service")
+        print("   5. Railway will automatically inject PGHOST, PGPORT, PGUSER, PGPASSWORD, PGDATABASE")
+        print("\n   OR manually set these variables in Railway:")
+        print("   - PGHOST")
+        print("   - PGPORT")
+        print("   - PGUSER")
+        print("   - PGPASSWORD")
+        print("   - PGDATABASE")
+        return False
+    
+    # Validate admin password
     if not admin_passwd or admin_passwd == 'admin':
         print("⚠️  WARNING: ADMIN_PASSWORD not set or using default 'admin'")
         print("   Please set ADMIN_PASSWORD in Railway environment variables!")
