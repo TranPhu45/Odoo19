@@ -1,2 +1,1 @@
-release: bash build.sh
-web: python odoo19/odoo-bin -c odoo.conf
+web: bash -c "if [ ! -d odoo19 ]; then echo 'Cloning Odoo 19...' && git clone https://github.com/odoo/odoo.git --branch 19.0 --depth 1 odoo19 || (echo 'Git clone failed, downloading...' && curl -L https://github.com/odoo/odoo/archive/refs/heads/19.0.zip -o odoo19.zip && unzip -q odoo19.zip && mv odoo-19.0 odoo19 && rm odoo19.zip); fi && echo 'Starting Odoo...' && python odoo19/odoo-bin -c odoo.conf"
