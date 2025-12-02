@@ -54,7 +54,7 @@ def is_railway_reference(value):
     """Check if value is a Railway variable reference like ${{Service.Variable}}"""
     if not value:
         return False
-    return value.startswith('${{') and value.endswith('}}')
+    return isinstance(value, str) and value.startswith('${{') and value.endswith('}}')
 
 def generate_odoo_conf():
     """Generate odoo.conf from environment variables"""
@@ -69,13 +69,21 @@ def generate_odoo_conf():
     http_port = os.getenv('PORT', '8069')
     admin_passwd = os.getenv('ADMIN_PASSWORD', 'admin')
     
+    # Debug: Print what we got
+    print(f"🔍 Debug - Environment variables:")
+    print(f"   PGHOST: {db_host}")
+    print(f"   PGPORT: {db_port}")
+    print(f"   PGUSER: {db_user}")
+    print(f"   PGPASSWORD: {'***' if db_password else 'None'}")
+    print(f"   PGDATABASE: {db_name}")
+    
     # Check for Railway variable references (Railway syntax: ${{Service.Variable}})
     # These are usually resolved by Railway at runtime, but we check anyway
     has_references = False
     if db_host and is_railway_reference(db_host):
         print("⚠️  WARNING: PGHOST is a Railway variable reference, not resolved value")
         print(f"   Value: {db_host}")
-        print("   Railway should resolve this at runtime, but if it doesn't, you may need to set the actual value")
+        print("   Railway should resolve this at runtime")
         has_references = True
     if db_port and is_railway_reference(db_port):
         print("⚠️  WARNING: PGPORT is a Railway variable reference, not resolved value")
@@ -93,12 +101,14 @@ def generate_odoo_conf():
     if has_references:
         print("\n💡 NOTE: Railway variable references detected.")
         print("   Railway should resolve these automatically at runtime.")
-        print("   If Odoo still can't connect, try setting actual values instead of references.")
-        print("   Continuing anyway...\n")
+        print("   We'll generate odoo.conf with these references - Railway will resolve them when Odoo runs.\n")
     
     # Validate PostgreSQL variables (required for Railway)
     # Allow Railway references to pass through (Railway will resolve them)
+    # Also allow empty strings if they are references (Railway will resolve)
     missing_vars = []
+    
+    # Check if variables exist (even if they are references)
     if not db_host or (not is_railway_reference(db_host) and not db_host.strip()):
         missing_vars.append('PGHOST')
     if not db_port or (not is_railway_reference(db_port) and not db_port.strip()):
@@ -116,9 +126,15 @@ def generate_odoo_conf():
         print("\n📋 SOLUTION:")
         print("   1. Go to Railway Dashboard")
         print("   2. Select your project")
-        print("   3. Add PostgreSQL service (if not exists)")
-        print("   4. Link PostgreSQL service to your web service")
-        print("   5. Railway will automatically inject PGHOST, PGPORT, PGUSER, PGPASSWORD, PGDATABASE")
+        print("   3. Go to Odoo19 service → Variables tab")
+        print("   4. Verify these variables exist:")
+        print("      - PGHOST")
+        print("      - PGPORT")
+        print("      - PGUSER")
+        print("      - PGPASSWORD")
+        print("      - PGDATABASE")
+        print("   5. If they are references (${{Postgres.XXX}}), Railway should resolve them")
+        print("   6. If not resolved, replace references with actual values from Postgres service")
         print("\n   OR manually set these variables in Railway:")
         print("   - PGHOST")
         print("   - PGPORT")
@@ -133,6 +149,7 @@ def generate_odoo_conf():
         print("   Please set ADMIN_PASSWORD in Railway environment variables!")
     
     # Generate config file
+    # Even if values are references, we'll write them - Railway will resolve at runtime
     config_content = ODOO_CONF_TEMPLATE.format(
         db_host=db_host,
         db_port=db_port,
@@ -148,7 +165,10 @@ def generate_odoo_conf():
         f.write(config_content)
     
     print("✅ Generated odoo.conf")
-    print(f"   Database: {db_user}@{db_host}:{db_port}/{db_name}")
+    if has_references:
+        print(f"   Database: {db_user}@{db_host}:{db_port}/{db_name} (Railway will resolve references)")
+    else:
+        print(f"   Database: {db_user}@{db_host}:{db_port}/{db_name}")
     print(f"   HTTP Port: {http_port}")
     
     return True
