@@ -6,9 +6,10 @@
 # FILE CẤU HÌNH NHẠY CẢM
 # ============================================
 # File cấu hình chứa mật khẩu và thông tin nhạy cảm
+# Ignore all .conf files first
+*.conf
 # Allow odoo.conf for Railway deployment (uses env variables, no hardcoded passwords)
 !odoo.conf
-*.conf
 !odoo.conf.example
 !odoo.conf.production
 config/
