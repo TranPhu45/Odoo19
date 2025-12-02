@@ -1,147 +1,141 @@
 #!/usr/bin/env python3
 """
 Script to install Odoo dependencies with workarounds for Railway
-Skips problematic packages that require system libraries
+Uses pip install -r with filtered requirements file
 """
 import subprocess
 import sys
 import os
+import re
 
 ODOO_REQUIREMENTS = "odoo19/requirements.txt"
+FILTERED_REQUIREMENTS = "requirements_filtered.txt"
 
-def install_dependencies():
-    """Install Odoo dependencies with workarounds"""
+def create_filtered_requirements():
+    """Create filtered requirements file without problematic packages"""
     if not os.path.exists(ODOO_REQUIREMENTS):
         print(f"❌ ERROR: {ODOO_REQUIREMENTS} not found!")
         return False
     
-    print("📦 Installing Odoo dependencies...")
-    print(f"Reading requirements from {ODOO_REQUIREMENTS}...")
+    print("📝 Creating filtered requirements file...")
     
     # Read requirements file
     with open(ODOO_REQUIREMENTS, 'r') as f:
         requirements = f.readlines()
     
     # Filter out problematic packages
-    problematic = ['lxml', 'libsass']
-    filtered_requirements = []
+    problematic = ['libsass']
+    filtered_lines = []
     skipped = []
     
-    for req in requirements:
-        req = req.strip()
-        if not req or req.startswith('#'):
+    for line in requirements:
+        original_line = line.strip()
+        if not original_line or original_line.startswith('#'):
             continue
+        
+        # Extract package name (before any version specifiers or markers)
+        # Handle cases like: package==1.0 ; marker
+        package_match = re.match(r'^([a-zA-Z0-9_-]+)', original_line)
+        if not package_match:
+            filtered_lines.append(line)
+            continue
+        
+        package_name = package_match.group(1).lower()
         
         # Check if it's a problematic package
         skip = False
         for prob in problematic:
-            if prob in req.lower():
+            if prob in package_name:
                 skip = True
-                skipped.append(req)
+                skipped.append(original_line)
                 break
         
         if not skip:
-            filtered_requirements.append(req)
+            filtered_lines.append(line)
     
-    # Install filtered requirements
-    if filtered_requirements:
-        print(f"Installing {len(filtered_requirements)} packages...")
-        for req in filtered_requirements:
-            try:
-                print(f"Installing: {req}")
-                result = subprocess.run(
-                    [sys.executable, '-m', 'pip', 'install', req],
-                    capture_output=True,
-                    text=True,
-                    timeout=300
-                )
-                if result.returncode != 0:
-                    print(f"⚠️  Warning: Failed to install {req}")
-                    print(f"   Error: {result.stderr[:200]}")
-                else:
-                    print(f"✅ Installed: {req}")
-            except Exception as e:
-                print(f"⚠️  Warning: Error installing {req}: {str(e)}")
+    # Write filtered requirements
+    with open(FILTERED_REQUIREMENTS, 'w') as f:
+        f.writelines(filtered_lines)
     
-    # Install alternatives for skipped packages
+    print(f"✅ Created {FILTERED_REQUIREMENTS}")
+    
     if skipped:
         print(f"\n⚠️  Skipped {len(skipped)} packages that require system libraries:")
-        for pkg in skipped:
+        for pkg in skipped[:5]:  # Show first 5
             print(f"   - {pkg}")
+        if len(skipped) > 5:
+            print(f"   ... and {len(skipped) - 5} more")
+    
+    return True
+
+def install_dependencies():
+    """Install Odoo dependencies"""
+    print("📦 Installing Odoo dependencies...")
+    
+    # Create filtered requirements
+    if not create_filtered_requirements():
+        return False
+    
+    # Install from filtered requirements using pip install -r
+    # This allows pip to properly handle markers
+    print(f"\nInstalling from {FILTERED_REQUIREMENTS}...")
+    try:
+        result = subprocess.run(
+            [sys.executable, '-m', 'pip', 'install', '-r', FILTERED_REQUIREMENTS],
+            capture_output=True,
+            text=True,
+            timeout=600
+        )
         
-        print("\nInstalling alternatives...")
-        
-        # Install lxml-binary instead of lxml
-        if any('lxml' in pkg.lower() for pkg in skipped):
-            print("Installing lxml-binary (pre-built wheel)...")
-            try:
+        if result.returncode != 0:
+            print(f"⚠️  Some packages failed to install")
+            print(f"   Error output: {result.stderr[:500]}")
+        else:
+            print("✅ Installed packages from requirements file")
+    except Exception as e:
+        print(f"⚠️  Error installing from requirements: {str(e)}")
+    
+    # Install lxml_html_clean (required for Odoo, separate from lxml)
+    print("\nInstalling lxml_html_clean...")
+    try:
+        subprocess.run(
+            [sys.executable, '-m', 'pip', 'install', 'lxml_html_clean'],
+            check=True,
+            capture_output=True,
+            timeout=300
+        )
+        print("✅ Installed lxml_html_clean")
+    except:
+        print("⚠️  Could not install lxml_html_clean (may already be installed)")
+    
+    # Verify essential packages
+    print("\n🔍 Verifying essential packages...")
+    essential_packages = ['passlib', 'polib', 'psutil', 'psycopg2-binary']
+    for pkg in essential_packages:
+        try:
+            result = subprocess.run(
+                [sys.executable, '-m', 'pip', 'show', pkg],
+                capture_output=True,
+                text=True,
+                timeout=30
+            )
+            if result.returncode == 0:
+                print(f"✅ {pkg}")
+            else:
+                print(f"⚠️  {pkg} not found, installing...")
                 subprocess.run(
-                    [sys.executable, '-m', 'pip', 'install', 'lxml-binary'],
+                    [sys.executable, '-m', 'pip', 'install', pkg],
                     check=True,
                     timeout=300
                 )
-                print("✅ Installed lxml-binary")
-            except:
-                print("⚠️  Could not install lxml-binary, trying lxml (may fail)...")
-                try:
-                    subprocess.run(
-                        [sys.executable, '-m', 'pip', 'install', '--only-binary=:all:', 'lxml'],
-                        check=True,
-                        timeout=300
-                    )
-                    print("✅ Installed lxml (binary)")
-                except:
-                    print("❌ Could not install lxml, Odoo may have limited functionality")
-        
-        # Install lxml_html_clean (required for Odoo)
-        print("Installing lxml_html_clean...")
-        try:
-            subprocess.run(
-                [sys.executable, '-m', 'pip', 'install', 'lxml_html_clean'],
-                check=True,
-                timeout=300
-            )
-            print("✅ Installed lxml_html_clean")
+                print(f"✅ Installed {pkg}")
         except:
-            print("⚠️  Could not install lxml_html_clean")
+            print(f"⚠️  Could not verify/install {pkg}")
     
-    # Install essential packages that might be missing
-    essential_packages = [
-        'passlib',
-        'polib',
-        'psutil',
-        'psycopg2-binary',
-        'Pillow',
-        'python-dateutil',
-        'pytz',
-        'Babel',
-        'Werkzeug',
-        'reportlab',
-        'decorator',
-        'requests',
-        'XlsxWriter',
-        'zeep',
-        'num2words',
-        'python-stdnum',
-        'pyserial',
-        'qrcode',
-        'vobject',
-        'gevent',
-        'greenlet',
-    ]
-    
-    print("\n📦 Installing essential packages...")
-    for pkg in essential_packages:
-        try:
-            subprocess.run(
-                [sys.executable, '-m', 'pip', 'install', pkg],
-                check=True,
-                capture_output=True,
-                timeout=300
-            )
-            print(f"✅ {pkg}")
-        except:
-            print(f"⚠️  {pkg} (may already be installed)")
+    # Clean up
+    if os.path.exists(FILTERED_REQUIREMENTS):
+        os.remove(FILTERED_REQUIREMENTS)
+        print(f"\n✅ Cleaned up {FILTERED_REQUIREMENTS}")
     
     print("\n✅ Dependency installation completed!")
     return True
