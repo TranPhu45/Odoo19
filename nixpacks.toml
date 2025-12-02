@@ -1,0 +1,28 @@
+[phases.setup]
+nixPkgs = ["python311", "git", "curl", "unzip"]
+
+[phases.install]
+cmds = [
+  "echo '=========================================='",
+  "echo 'Building Odoo 19 application...'",
+  "echo '=========================================='",
+  "echo 'Current directory:'",
+  "pwd",
+  "echo 'Listing files:'",
+  "ls -la",
+  "echo 'Cloning Odoo 19 from GitHub...'",
+  "git clone https://github.com/odoo/odoo.git --branch 19.0 --depth 1 odoo19 || (echo 'Git clone failed, trying download...' && curl -L https://github.com/odoo/odoo/archive/refs/heads/19.0.zip -o odoo19.zip && unzip -q odoo19.zip && mv odoo-19.0 odoo19 && rm odoo19.zip && echo 'Downloaded successfully')",
+  "echo 'Verifying odoo19 directory...'",
+  "ls -la odoo19/ | head -10",
+  "echo 'Verifying odoo-bin exists...'",
+  "ls -la odoo19/odoo-bin || (echo 'ERROR: odoo-bin not found!' && exit 1)",
+  "echo 'Installing Python dependencies...'",
+  "pip install -r requirements.txt",
+  "echo '=========================================='",
+  "echo 'Build completed successfully!'",
+  "echo '=========================================='"
+]
+
+[start]
+cmd = "python odoo19/odoo-bin -c odoo.conf"
+
